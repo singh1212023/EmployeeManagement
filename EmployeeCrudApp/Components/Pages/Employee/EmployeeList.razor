@@ -1,0 +1,69 @@
+﻿
+@page "/"
+@using  EmployeeCrudApp.Interface.Employee
+@using EmployeeCrudApp.RequestModels.Employee
+@inject IEmployeeRepository  EmployeeService
+@inject NavigationManager Navigation
+@* <button @onclick="AddEmployee">Add New Employee</button> *@
+
+<MudTable Items="Employees" Bordered="true" Hover="true" Striped="true" Dense="true" Breakpoint="Breakpoint.Md">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Employee List</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        @* <MudTh>ID</MudTh> *@
+        <MudTh>Name</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Designation</MudTh>
+        <MudTh>Date of Joining</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        @* <MudTd DataLabel="ID">@context.Id</MudTd> *@
+        <MudTd DataLabel="Name">@context.FirstName @context.LastName</MudTd>
+        <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Designation">@context.Designation</MudTd>
+        <MudTd DataLabel="Date of Joining">@context.DateOfJoining?.ToString("yyyy-MM-dd")</MudTd>
+        <MudTd DataLabel="Actions">
+            @* <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" @onclick="() =>EditEmployee(context.Id)">Edit</MudButton>
+            <MudButton Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="() => DeleteEmployee(context.Id)">Delete</MudButton> *@
+            <MudButton Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="() => DeleteEmployee(context.Id)">
+                Delete
+            </MudButton>
+
+            <MudNavMenu>
+                <MudNavLink Href=@($"/employee/{context.Id}") Match="NavLinkMatch.All">Edit</MudNavLink>
+            </MudNavMenu>
+        </MudTd>
+    </RowTemplate>
+</MudTable> 
+
+
+
+@code {
+    private List<GetAllEmployeRequestModel> Employees = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Employees = await EmployeeService.GetAllEmployeesAsync();
+    }
+        
+    private void AddEmployee()
+    {
+        Navigation.NavigateTo("/employee/create");
+    }
+
+    private void EditEmployee(int id)
+    {
+        Console.WriteLine($"Navigating to /employee/edit/{id}"); 
+        Navigation.NavigateTo($"/employee/edit/{id}");
+    }
+
+    private async Task DeleteEmployee(int id)
+    {
+        await EmployeeService.DeleteEmployeeAsync(id);
+        Employees = await EmployeeService.GetAllEmployeesAsync();
+    }
+}
+
+

@@ -1,0 +1,94 @@
+﻿@page "/employee/{Id:int?}"
+@using EmployeeCrudApp.Interface.Employee
+@using EmployeeCrudApp.RequestModels.Employee
+@inject IEmployeeRepository EmployeeService
+@inject NavigationManager Navigation
+@* @inject Imapp Mapper *@
+
+<h3>@(Employee.Id == 0 ? "Add New Employee" : "Edit Employee")</h3>
+
+<EditForm Model="Employee" OnValidSubmit="SaveEmployee" FormName="EmployeeFormName">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <InputNumber @bind-Value="Employee.Id" hidden  class="form-control" />
+    </div>
+
+    <div>
+        <label>First Name:</label>
+        <InputText @bind-Value="Employee.FirstName" class="form-control" />
+    </div>
+    <div>
+        <label>Last Name:</label>
+        <InputText @bind-Value="Employee.LastName" class="form-control" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="Employee.Email" type="email" class="form-control" />
+    </div>
+    <div>
+        <label>Designation:</label>
+        <InputText @bind-Value="Employee.Designation" class="form-control" />
+    </div>
+    <div>
+        <label>Date of Joining:</label>
+        <InputDate @bind-Value="Employee.DateOfJoining" class="form-control" />
+    </div>
+    <div>
+        <button type="submit" class="btn btn-primary">  @(Employee.Id == 0 ? "Save" : "Update")</button>
+        <button @onclick="Cancel" type="button" class="btn btn-secondary">Cancel</button>
+    </div>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    [SupplyParameterFromForm]
+    private AddEmployeeRequestModel? Employee { get; set; }
+    protected override void OnInitialized() => Employee ??= new();
+
+    // private AddEmployeeRequestModel Employee = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue && Employee.Id == 0)
+
+        {
+
+            var employeeData = await EmployeeService.GetEmployeeByIdAsync(Id.Value);
+            Employee = new AddEmployeeRequestModel
+                {
+                    Id= employeeData.Id,
+                    FirstName = employeeData.FirstName,
+                    LastName = employeeData.LastName,
+                    Email = employeeData.Email,
+                    Designation = employeeData.Designation,
+                    DateOfJoining = employeeData.DateOfJoining
+                };
+        }
+    }
+
+    private async Task SaveEmployee()
+    {
+        if (Employee.Id == 0)
+        {
+            await EmployeeService.AddEmployeeAsync(Employee);
+
+        }
+        else
+        {
+        await EmployeeService.UpdateEmployeeAsync(Employee);
+            
+        }
+
+        Navigation.NavigateTo("/");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+}
