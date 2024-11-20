@@ -1,8 +1,9 @@
 ﻿@page "/employee/{Id:int?}"
+@inject NavigationManager Navigation
 @using EmployeeCrudApp.Interface.Employee
 @using EmployeeCrudApp.RequestModels.Employee
+@rendermode InteractiveServer
 @inject IEmployeeRepository EmployeeService
-@inject NavigationManager Navigation
 @* @inject Imapp Mapper *@
 
 <h3>@(Employee.Id == 0 ? "Add New Employee" : "Edit Employee")</h3>

@@ -2,16 +2,19 @@
 @page "/"
 @using  EmployeeCrudApp.Interface.Employee
 @using EmployeeCrudApp.RequestModels.Employee
-@inject IEmployeeRepository  EmployeeService
 @inject NavigationManager Navigation
-@* <button @onclick="AddEmployee">Add New Employee</button> *@
+@rendermode InteractiveServer
+@inject IEmployeeRepository  EmployeeService
 
-<MudTable Items="Employees" Bordered="true" Hover="true" Striped="true" Dense="true" Breakpoint="Breakpoint.Md">
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => AddEmployee()">Add Employee</MudButton>
+
+<MudTable @ref="@employeeData" Items="Employees" RowsPerPage="4" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" Filter="new Func<GetAllEmployeRequestModel,bool>(FilterFunc1)" @bind-SelectedItem="selectedItem">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Employee List</MudText>
+        <MudText Typo="Typo.h6">Employee</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <HeaderContent>
-        @* <MudTh>ID</MudTh> *@
         <MudTh>Name</MudTh>
         <MudTh>Email</MudTh>
         <MudTh>Designation</MudTh>
@@ -19,44 +22,63 @@
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        @* <MudTd DataLabel="ID">@context.Id</MudTd> *@
         <MudTd DataLabel="Name">@context.FirstName @context.LastName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
         <MudTd DataLabel="Designation">@context.Designation</MudTd>
         <MudTd DataLabel="Date of Joining">@context.DateOfJoining?.ToString("yyyy-MM-dd")</MudTd>
         <MudTd DataLabel="Actions">
-            @* <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" @onclick="() =>EditEmployee(context.Id)">Edit</MudButton>
-            <MudButton Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="() => DeleteEmployee(context.Id)">Delete</MudButton> *@
-            <MudButton Color="Color.Error" Variant="Variant.Text" Size="Size.Small" OnClick="() => DeleteEmployee(context.Id)">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Tertiary" Disabled=@disabled OnClick="() => EditEmployee(context.Id)">
+                Edit
+            </MudButton>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteEmployee(context.Id)">
                 Delete
             </MudButton>
-
-            <MudNavMenu>
-                <MudNavLink Href=@($"/employee/{context.Id}") Match="NavLinkMatch.All">Edit</MudNavLink>
-            </MudNavMenu>
         </MudTd>
     </RowTemplate>
-</MudTable> 
-
-
+    <PagerContent>
+        <MudPagination SelectedChanged="PageChanged" Count="@((employeeData.GetFilteredItemsCount() + employeeData.RowsPerPage - 1) / employeeData.RowsPerPage)" Class="pa-4" />
+    </PagerContent>
+</MudTable>
+<div style="min-width:200px;">
+    <MudText Class="align-self-center d-inline">Selected: @(selectedItem != null ? $"{selectedItem.FirstName} {selectedItem.LastName}" : "None")</MudText>
+</div>
 
 @code {
+    private MudTable<GetAllEmployeRequestModel> employeeData;
+    private IEnumerable<GetAllEmployeRequestModel> _elements = new List<GetAllEmployeRequestModel>();
     private List<GetAllEmployeRequestModel> Employees = new();
+    bool disabled = false;
+    private string searchString1 = "";
+    private GetAllEmployeRequestModel selectedItem = null;
 
     protected override async Task OnInitializedAsync()
     {
         Employees = await EmployeeService.GetAllEmployeesAsync();
     }
-        
+    private bool FilterFunc1(GetAllEmployeRequestModel element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(GetAllEmployeRequestModel element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+   
     private void AddEmployee()
     {
-        Navigation.NavigateTo("/employee/create");
+        Navigation.NavigateTo("/employee");
     }
 
     private void EditEmployee(int id)
     {
         Console.WriteLine($"Navigating to /employee/edit/{id}"); 
-        Navigation.NavigateTo($"/employee/edit/{id}");
+        Navigation.NavigateTo($"/employee/{id}");
     }
 
     private async Task DeleteEmployee(int id)
@@ -64,6 +86,18 @@
         await EmployeeService.DeleteEmployeeAsync(id);
         Employees = await EmployeeService.GetAllEmployeesAsync();
     }
+
+    private void PageChanged(int i)
+    {
+        employeeData.NavigateTo(i - 1);
+    }
 }
+
+
+
+
+
+
+
 
 
